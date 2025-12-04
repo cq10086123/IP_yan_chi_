@@ -5,7 +5,7 @@ on:
     - cron: "0 * * * *"   # 每小时执行一次
   workflow_dispatch:
 
-# ✅ 新增：授予写入权限
+# 权限修复：授予写入权限，解决之前的 403 错误
 permissions:
   contents: write
 
@@ -14,14 +14,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout 仓库
+      # 1️⃣ Checkout 仓库，并开启写权限
       - name: Checkout repo
         uses: actions/checkout@v3
         with:
-          persist-credentials: true # 必须为 true
-          fetch-depth: 0            # 建议设置为 0 以获取完整历史，有时有助于 push
+          persist-credentials: true
+          # 确保获取完整历史，方便 git push
+          fetch-depth: 0 
 
-      # 2️⃣ 获取 IP 列表
+      # 2️⃣ 获取 IP 列表，去掉 # 后缀，只保留前 10 行
       - name: Fetch IP list
         run: |
           curl -s "https://ipdb.api.030101.xyz/?type=bestproxy&country=true" \
@@ -29,15 +30,41 @@ jobs:
             | head -n 10 \
             > ips.txt
 
-      # 3️⃣ 提交并推送更新
+      # 3️⃣ 生成带 IP 的配置列表
+      - name: Generate Final Configs
+        run: |
+          # 定义你的基础配置模板
+          # 注意：这里的 HOST 和 SNI 是不同的字段。我们只替换连接地址 (www.visa.cn)
+          BASE_CONFIG="trojan://9308bbad-9ab0-6d8e-7afa-66a69a63ee1d@www.visa.cn:443?security=tls&sni=debugai.12311111.xyz&fp=chrome&insecure=0&allowInsecure=0&type=ws&host=debugai.12311111.xyz&path=%2F9308bbad#Hug-US-Amazon_Technologies_Inc."
+          
+          # 创建一个临时文件来存放最终配置
+          OUTPUT_FILE="final_configs.txt"
+          echo "" > "${OUTPUT_FILE}"
+
+          # 遍历 ips.txt 中的每一个 IP
+          while IFS= read -r IP
+          do
+            # 使用 sed 进行精准替换：
+            # 匹配 @ 和 :443 之间的任何字符（无论是域名还是旧 IP），然后替换为新 IP
+            # sed 模式：s/@<任何非冒号字符>:443/@<新IP>:443/
+            NEW_CONFIG=$(echo "${BASE_CONFIG}" | sed "s/@\([^:]*\):443/@${IP}:443/")
+            
+            # 将新配置添加到输出文件
+            echo "${NEW_CONFIG}" >> "${OUTPUT_FILE}"
+          done < ips.txt
+
+          # 将最终生成的文件重命名为 ips.txt
+          mv "${OUTPUT_FILE}" ips.txt
+
+      # 4️⃣ 提交并推送更新
       - name: Commit and push changes
         run: |
-          # 检查是否有文件变化
           if [ -n "$(git status --porcelain)" ]; then
+            # 使用官方 Bot 身份提交
             git config --global user.name "github-actions[bot]"
             git config --global user.email "github-actions[bot]@users.noreply.github.com"
             git add ips.txt
-            git commit -m "Update IP list"
+            git commit -m "Update IP list with new configs"
             git push origin HEAD
           else
             echo "No changes to commit"
