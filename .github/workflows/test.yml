@@ -1,0 +1,25 @@
+name: IP Latency Test
+
+on:
+  workflow_dispatch:    # 手动触发
+  schedule:
+    - cron: "0 */6 * * *"   # 每6小时自动跑一次，可删
+
+jobs:
+  test_ips:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run latency test
+        run: bash ./test.sh
+
+      - name: Commit result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add result.txt
+          git commit -m "Update top 10 IP results" || echo "No changes"
+          git push
