@@ -2,7 +2,7 @@ name: Fetch IP List
 
 on:
   schedule:
-    - cron: "0 * * * *"   # 每小时执行一次
+    - cron: "0 */3 * * *"   # 每三小时执行一次
   workflow_dispatch:
 
 # 权限修复：授予写入权限，解决之前的 403 错误
