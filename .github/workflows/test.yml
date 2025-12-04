@@ -39,7 +39,7 @@ jobs:
           
           # 创建一个临时文件来存放最终配置
           OUTPUT_FILE="final_configs.txt"
-          echo "" > "${OUTPUT_FILE}"
+          > "${OUTPUT_FILE}"
 
           # 遍历 ips.txt 中的每一个 IP
           while IFS= read -r IP
