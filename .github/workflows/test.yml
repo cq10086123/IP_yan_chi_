@@ -1,28 +1,33 @@
-name: IP Latency Test
+name: Fetch IP List
 
 on:
-  workflow_dispatch:
   schedule:
-    - cron: "0 */6 * * *"
-
-permissions:
-  contents: write   # ← 关键修复点，允许 Actions 提交代码
+    - cron: "0 * * * *"   # 每小时执行一次，可改
+  workflow_dispatch:       # 手动运行
 
 jobs:
-  test_ips:
+  update-ip-list:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-      - name: Run latency test
-        run: bash ./test.sh
-
-      - name: Commit result
+      - name: Fetch IP list
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add result.txt
-          git commit -m "Update top 10 IP results" || echo "No changes"
-          git push
+          curl -s "https://ipdb.api.030101.xyz/?type=bestproxy&country=true" \
+            | sed 's/#.*//' \
+            | head -n 10 \
+            > ips.txt
+
+      - name: Commit changes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config --global user.name "github-actions"
+            git config --global user.email "github-actions@github.com"
+            git add ips.txt
+            git commit -m "Update IP list"
+            git push
+          else
+            echo "No changes"
+          fi
