@@ -5,19 +5,23 @@ on:
     - cron: "0 * * * *"   # 每小时执行一次
   workflow_dispatch:
 
+# ✅ 新增：授予写入权限
+permissions:
+  contents: write
+
 jobs:
   update-ip-list:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout 仓库，并开启写权限
+      # 1️⃣ Checkout 仓库
       - name: Checkout repo
         uses: actions/checkout@v3
         with:
-          persist-credentials: true  # 保证后续 git push 有权限
-          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true # 必须为 true
+          fetch-depth: 0            # 建议设置为 0 以获取完整历史，有时有助于 push
 
-      # 2️⃣ 获取 IP 列表，去掉 # 后缀，只保留前 10 行
+      # 2️⃣ 获取 IP 列表
       - name: Fetch IP list
         run: |
           curl -s "https://ipdb.api.030101.xyz/?type=bestproxy&country=true" \
@@ -28,9 +32,10 @@ jobs:
       # 3️⃣ 提交并推送更新
       - name: Commit and push changes
         run: |
+          # 检查是否有文件变化
           if [ -n "$(git status --porcelain)" ]; then
-            git config --global user.name "github-actions"
-            git config --global user.email "github-actions@github.com"
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
             git add ips.txt
             git commit -m "Update IP list"
             git push origin HEAD
