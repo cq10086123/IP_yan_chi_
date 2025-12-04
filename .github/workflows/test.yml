@@ -3,16 +3,18 @@ name: Fetch IP List
 on:
   schedule:
     - cron: "0 * * * *"   # 每小时执行一次，可改
-  workflow_dispatch:       # 手动运行
+  workflow_dispatch:       # 支持手动运行
 
 jobs:
   update-ip-list:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ 检出仓库
       - name: Checkout repo
         uses: actions/checkout@v3
 
+      # 2️⃣ 获取 IP 列表、去掉 # 和后面的国家码，只保留前 10 行
       - name: Fetch IP list
         run: |
           curl -s "https://ipdb.api.030101.xyz/?type=bestproxy&country=true" \
@@ -20,14 +22,15 @@ jobs:
             | head -n 10 \
             > ips.txt
 
-      - name: Commit changes
+      # 3️⃣ 提交更新（使用 GITHUB_TOKEN 避免权限问题）
+      - name: Commit and push changes
         run: |
           if [ -n "$(git status --porcelain)" ]; then
             git config --global user.name "github-actions"
             git config --global user.email "github-actions@github.com"
             git add ips.txt
             git commit -m "Update IP list"
-            git push
+            git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:main
           else
-            echo "No changes"
+            echo "No changes to commit"
           fi
