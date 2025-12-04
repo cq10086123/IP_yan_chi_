@@ -1,9 +1,12 @@
 name: IP Latency Test
 
 on:
-  workflow_dispatch:    # 手动触发
+  workflow_dispatch:
   schedule:
-    - cron: "0 */6 * * *"   # 每6小时自动跑一次，可删
+    - cron: "0 */6 * * *"
+
+permissions:
+  contents: write   # ← 关键修复点，允许 Actions 提交代码
 
 jobs:
   test_ips:
