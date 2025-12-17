@@ -1,1 +1,2 @@
 trojan://9308bbad-9ab0-6d8e-7afa-66a69a63ee1d@130.162.61.18:443?security=tls&sni=debugai.12311111.xyz&fp=chrome&insecure=0&allowInsecure=0&type=ws&host=debugai.12311111.xyz&path=%2F9308bbad#Hug-US-Amazon_Technologies_Inc.
+trojan://9308bbad-9ab0-6d8e-7afa-66a69a63ee1d@144.24.200.164:443?security=tls&sni=debugai.12311111.xyz&fp=chrome&insecure=0&allowInsecure=0&type=ws&host=debugai.12311111.xyz&path=%2F9308bbad#Hug-US-Amazon_Technologies_Inc.
